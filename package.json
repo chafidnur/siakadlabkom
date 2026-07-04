@@ -1,0 +1,24 @@
+{
+  "name": "siakad",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app_config.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "push:gas": "clasp push",
+    "push:git": "git add . && git commit -m \"chore: auto deploy update\" && git push origin main",
+    "deploy": "npm run push:gas && npm run push:git",
+    "deploy:msg": "clasp push && git add . && git commit -m"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chafidnur/siakadlabkom.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/chafidnur/siakadlabkom/issues"
+  },
+  "homepage": "https://github.com/chafidnur/siakadlabkom#readme"
+}
