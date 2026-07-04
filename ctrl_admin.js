@@ -65,3 +65,26 @@ function apiGetDashboardData() {
 function apiSaveGrade(data) {
   return AdminController.saveGrade(data);
 }
+
+/**
+ * Mengambil semua data siswa khusus untuk halaman cetak ID Card
+ */
+function apiGetAllStudents() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName(Config.TABLE_STUDENTS);
+  const data = sheet.getDataRange().getValues();
+  let students = [];
+  
+  for (let i = 1; i < data.length; i++) {
+    // Pastikan hanya mengambil baris yang memiliki NIS
+    if (data[i][0]) {
+      students.push({
+        kd_siswa: data[i][0].toString(),
+        nama: data[i][1],
+        kelas: data[i][2],
+        jurusan: data[i][3]
+      });
+    }
+  }
+  return students;
+}

@@ -18,6 +18,9 @@ function doGet(e) {
     case 'admin': 
       template = HtmlService.createTemplateFromFile('view_admin'); 
       break;
+    case 'cetak':
+      template = HtmlService.createTemplateFromFile('view_cetak_kartu'); 
+    break;
     case 'home':
     default: 
       template = HtmlService.createTemplateFromFile('view_home'); 
