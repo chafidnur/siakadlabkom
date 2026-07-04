@@ -3,12 +3,9 @@
   "version": "1.0.0",
   "description": "",
   "main": "app_config.js",
-  "scripts": {
+ "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "push:gas": "clasp push",
-    "push:git": "git add . && git commit -m \"chore: auto deploy update\" && git push origin main",
-    "deploy": "npm run push:gas && npm run push:git",
-    "deploy:msg": "clasp push && git add . && git commit -m"
+    "deploy": "clasp push && git add . && git commit -m \"chore: update dan sinkronisasi otomatis\" && git push origin main"
   },
   "repository": {
     "type": "git",
