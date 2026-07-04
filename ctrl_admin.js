@@ -68,6 +68,7 @@ function apiSaveGrade(data) {
 
 /**
  * Mengambil semua data siswa khusus untuk halaman cetak ID Card
+ * Lengkap dengan pencarian foto dari Google Drive
  */
 function apiGetAllStudents() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -75,14 +76,40 @@ function apiGetAllStudents() {
   const data = sheet.getDataRange().getValues();
   let students = [];
   
+  // 1. Hubungkan ke Folder Google Drive
+  let folderFoto = null;
+  try {
+    if (Config.FOLDER_FOTO_ID && Config.FOLDER_FOTO_ID !== 'MASUKKAN_ID_FOLDER_ANDA_DISINI') {
+      folderFoto = DriveApp.getFolderById(Config.FOLDER_FOTO_ID);
+    }
+  } catch(e) {
+    Logger.log("Folder Foto tidak dapat diakses: " + e.message);
+  }
+  
   for (let i = 1; i < data.length; i++) {
-    // Pastikan hanya mengambil baris yang memiliki NIS
     if (data[i][0]) {
+      const nis = data[i][0].toString();
+      
+      // Default foto jika tidak ditemukan (Avatar Inisial)
+      let fotoUrl = `https://ui-avatars.com/api/?name=${nis}&background=e2e8f0&color=475569&size=150`;
+      
+      // 2. Cari file gambar berdasarkan NIS di dalam folder
+      if (folderFoto) {
+        // Mencari file yang judulnya mengandung NIS (misal: 1001.jpg atau 1001.png)
+        const files = folderFoto.searchFiles(`title contains '${nis}'`);
+        if (files.hasNext()) {
+          const file = files.next();
+          // Convert ID file Drive menjadi URL gambar langsung
+          fotoUrl = `https://drive.google.com/uc?export=view&id=${file.getId()}`;
+        }
+      }
+
       students.push({
-        kd_siswa: data[i][0].toString(),
+        kd_siswa: nis,
         nama: data[i][1],
         kelas: data[i][2],
-        jurusan: data[i][3]
+        jurusan: data[i][3],
+        foto: fotoUrl
       });
     }
   }

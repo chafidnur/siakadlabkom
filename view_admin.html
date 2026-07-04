@@ -86,7 +86,10 @@
 
     <script>
         // Memuat data awal saat halaman dibuka
-        document.addEventListener('DOMContentLoaded', loadDashboardData);
+        document.addEventListener('DOMContentLoaded', function() {
+          // Kita beri sedikit jeda agar halaman ter-render sempurna terlebih dahulu
+            setTimeout(loadDashboardData, 100); 
+        });
 
         function loadDashboardData() {
             google.script.run
