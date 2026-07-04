@@ -41,12 +41,21 @@
             gainNode.gain.exponentialRampToValueAtTime(0.00001, context.currentTime + 0.1);
             oscillator.stop(context.currentTime + 0.1);
         }
-
-        // Konfigurasi Scanner
+        
+        // Konfigurasi Scanner yang Diperbarui
         let isScanning = true;
         const html5QrcodeScanner = new Html5QrcodeScanner(
             "reader", 
-            { fps: 10, qrbox: {width: 250, height: 250} }, 
+            { 
+                fps: 10, 
+                qrbox: {width: 250, height: 250},
+                // Fitur Cerdas: Mengingat kamera (misal webcam eksternal) yang dipilih sebelumnya
+                rememberLastUsedCamera: true, 
+                // Prioritaskan kamera belakang/kamera utama (jika ada)
+                videoConstraints: {
+                    facingMode: "environment"
+                }
+            }, 
             /* verbose= */ false
         );
 
