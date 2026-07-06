@@ -38,7 +38,7 @@
             <div id="placeholderText" class="absolute text-gray-400 text-sm">Kamera belum aktif</div>
         </div>
 
-        <a href="<?= base_url ?>" class="inline-flex items-center justify-center bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-6 rounded-lg transition duration-200">
+        <a href="<?= base_url ?>" target="_top" class="inline-flex items-center justify-center bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-6 rounded-lg transition duration-200">
             Kembali ke Beranda
         </a>
     </div>
@@ -52,7 +52,10 @@
         const btnStop = document.getElementById('btnStop');
         const placeholderText = document.getElementById('placeholderText');
 
-        // Fungsi Audio Beep
+        document.addEventListener('DOMContentLoaded', function() {
+            html5QrCode = new Html5Qrcode("reader");
+        });
+
         function playBeep() {
             const context = new (window.AudioContext || window.webkitAudioContext)();
             const oscillator = context.createOscillator();
@@ -66,59 +69,49 @@
             oscillator.stop(context.currentTime + 0.1);
         }
 
-        // Meminta izin kamera dan mendeteksi daftar perangkat saat halaman siap
-        document.addEventListener('DOMContentLoaded', function() {
-            html5QrCode = new Html5Qrcode("reader");
-            
-            // Deteksi daftar kamera secara diam-diam
-            Html5Qrcode.getCameras().then(devices => {
-                if (devices && devices.length > 0) {
-                    cameraSelectContainer.classList.remove('hidden');
-                    cameraSelect.innerHTML = '';
-                    
-                    devices.forEach((device, index) => {
-                        const option = document.createElement('option');
-                        option.value = device.id;
-                        // Jika ada webcam eksternal, biasanya teksnya mengandung merk/nama alat tersebut
-                        option.text = device.label || `Kamera ${index + 1}`;
-                        cameraSelect.appendChild(option);
-                    });
-                }
-            }).catch(err => {
-                console.error("Gagal mendeteksi kamera: ", err);
-            });
-        });
-
+        // PERBAIKAN: Izin kamera baru diminta SETELAH tombol diklik
         function startCamera() {
             if(isScanning) return;
             
-            const selectedCameraId = cameraSelect.value;
-            if(!selectedCameraId) {
-                Swal.fire('Error', 'Perangkat kamera tidak terdeteksi.', 'error');
-                return;
-            }
-
-            placeholderText.classList.add('hidden');
+            btnStart.innerHTML = 'Meminta Izin...';
             btnStart.disabled = true;
-            btnStop.disabled = false;
 
-            html5QrCode.start(
-                selectedCameraId, 
-                { fps: 10, qrbox: { width: 250, height: 250 } },
-                (decodedText, decodedResult) => {
-                    // Pengecekan jika berhasil scan
-                    processScannedData(decodedText);
-                },
-                (errorMessage) => {
-                    // Abaikan error real-time jika tidak ada QR di depan kamera
+            Html5Qrcode.getCameras().then(devices => {
+                if (devices && devices.length > 0) {
+                    
+                    if (cameraSelect.options.length === 0) {
+                        cameraSelectContainer.classList.remove('hidden');
+                        devices.forEach((device, index) => {
+                            const option = document.createElement('option');
+                            option.value = device.id;
+                            option.text = device.label || `Kamera ${index + 1}`;
+                            cameraSelect.appendChild(option);
+                        });
+                    }
+                    
+                    const selectedCameraId = cameraSelect.value;
+                    
+                    html5QrCode.start(
+                        selectedCameraId, 
+                        { fps: 10, qrbox: { width: 250, height: 250 } },
+                        (decodedText) => { processScannedData(decodedText); },
+                        (errorMessage) => {}
+                    ).then(() => {
+                        isScanning = true;
+                        placeholderText.classList.add('hidden');
+                        btnStart.innerHTML = '📷 Kamera Aktif';
+                        btnStop.disabled = false;
+                    }).catch(err => {
+                        resetButtons();
+                        Swal.fire('Gagal Membuka Kamera', err.message, 'error');
+                    });
+                } else {
+                    resetButtons();
+                    Swal.fire('Error', 'Tidak ada kamera yang terdeteksi', 'error');
                 }
-            ).then(() => {
-                isScanning = true;
             }).catch(err => {
-                placeholderText.classList.remove('hidden');
-                btnStart.disabled = false;
-                btnStop.disabled = true;
-                Swal.fire('Gagal Membuka Kamera', err.message, 'error');
+                resetButtons();
+                Swal.fire('Izin Ditolak', 'Harap izinkan akses kamera di browser Anda.', 'error');
             });
         }
 
@@ -127,16 +120,18 @@
             
             html5QrCode.stop().then(() => {
                 isScanning = false;
-                btnStart.disabled = false;
-                btnStop.disabled = true;
+                resetButtons();
                 placeholderText.classList.remove('hidden');
-            }).catch(err => {
-                console.error("Gagal menghentikan kamera", err);
             });
         }
 
+        function resetButtons() {
+            btnStart.innerHTML = '📷 Aktifkan Kamera';
+            btnStart.disabled = false;
+            btnStop.disabled = true;
+        }
+
         function processScannedData(kd_siswa) {
-            // Hentikan sementara pembacaan agar tidak ganda saat memproses data ke server
             stopCamera();
             playBeep();
 
@@ -156,17 +151,13 @@
                             html: `<b>${response.data.nama_lengkap}</b><br>${response.data.kelas} - ${response.data.jurusan}`,
                             timer: 2500,
                             showConfirmButton: false
-                        }).then(() => {
-                            startCamera(); // Otomatis aktifkan kamera kembali untuk siswa berikutnya
-                        });
+                        }).then(() => { startCamera(); });
                     } else {
                         Swal.fire({
                             icon: 'error',
                             title: 'Gagal',
                             text: response.message
-                        }).then(() => {
-                            startCamera();
-                        });
+                        }).then(() => { startCamera(); });
                     }
                 })
                 .apiProcessScan(kd_siswa, 'Kelas');
